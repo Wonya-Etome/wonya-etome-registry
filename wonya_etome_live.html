@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a3a2a">
+<title>Wonya Etome · Registry</title>
+
+<!-- Firebase v9 compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,800;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --ink:      #0f1f17;
+  --forest:   #1a3a2a;
+  --emerald:  #1e6b45;
+  --jade:     #2ecc71;
+  --sage:     #a8dfbf;
+  --amber:    #f4b942;
+  --gold:     #c9902a;
+  --cream:    #faf7f0;
+  --warm:     #f2ead8;
+  --border:   #ddd5c4;
+  --muted:    #7a7060;
+  --card:     #ffffff;
+  --paid-bg:  #dcf5e7;  --paid-fg:  #0d5c2e;
+  --unpaid-bg:#fde8e8;  --unpaid-fg:#7a1c1c;
+  --r: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh;overflow-x:hidden;}
+
+/* ══ SETUP SCREEN ══════════════════════════════════════ */
+#setupScreen{
+  position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(160deg,var(--forest) 0%,#0f2a1c 100%);
+  overflow-y:auto;padding:24px 16px 40px;
+}
+.setup-inner{max-width:480px;margin:0 auto;}
+.setup-logo{font-family:'Fraunces',serif;font-size:28px;color:var(--amber);margin-bottom:4px;}
+.setup-logo span{color:rgba(255,255,255,.5);font-size:14px;display:block;font-family:'Outfit',sans-serif;font-weight:300;margin-top:2px;}
+.setup-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px;margin-top:20px;}
+.setup-card h3{color:#fff;font-size:15px;font-weight:600;margin-bottom:4px;}
+.setup-card p{color:rgba(255,255,255,.5);font-size:12px;line-height:1.6;margin-bottom:14px;}
+.setup-step{display:flex;gap:10px;margin-bottom:12px;}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--amber);color:var(--forest);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.step-txt{color:rgba(255,255,255,.7);font-size:13px;line-height:1.5;}
+.step-txt a{color:var(--amber);text-decoration:none;}
+.step-txt code{background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px;font-size:11px;}
+.setup-textarea{width:100%;height:140px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#7fffb5;font-family:monospace;font-size:12px;padding:12px;resize:none;outline:none;transition:border-color .2s;}
+.setup-textarea:focus{border-color:var(--amber);}
+.setup-textarea::placeholder{color:rgba(255,255,255,.2);}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.f-label{color:rgba(255,255,255,.6);font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
+.f-input{width:100%;padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.f-input:focus{border-color:var(--amber);}
+.f-input::placeholder{color:rgba(255,255,255,.2);}
+.setup-err{color:#ff7c7c;font-size:12px;margin-top:8px;min-height:18px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 20px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;outline:none;transition:all .18s;white-space:nowrap;}
+.btn-amber{background:var(--amber);color:var(--forest);}
+.btn-amber:hover{background:#f9cb6a;transform:translateY(-1px);}
+.btn-amber:active{transform:none;}
+.btn-forest{background:var(--forest);color:#fff;}
+.btn-forest:hover{background:var(--emerald);}
+.btn-emerald{background:var(--emerald);color:#fff;}
+.btn-emerald:hover{background:var(--jade);color:var(--forest);}
+.btn-ghost{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.15);}
+.btn-ghost:hover{background:rgba(255,255,255,.14);}
+.btn-danger{background:#c0392b;color:#fff;}
+.btn-danger:hover{background:#e74c3c;}
+.btn-sm{padding:7px 13px;font-size:12px;border-radius:8px;}
+.btn-full{width:100%;}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;}
+
+/* ══ APP ═══════════════════════════════════════════════ */
+#appShell{display:none;}
+
+/* HERO */
+.hero{background:linear-gradient(140deg,var(--forest) 0%,var(--emerald) 100%);padding:22px 16px 20px;position:relative;overflow:hidden;}
+.hero::after{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.04);}
+.hero::before{content:'';position:absolute;right:40px;bottom:-50px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.03);}
+.hero-top{position:relative;z-index:1;max-width:700px;margin:0 auto;}
+.hero-eyebrow{font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--amber);margin-bottom:6px;}
+.hero-title{font-family:'Fraunces',serif;font-size:clamp(20px,6vw,28px);color:#fff;line-height:1.15;}
+.hero-title em{color:var(--amber);font-style:normal;}
+.hero-badges{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.hero-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:5px 12px;color:#fff;font-size:12px;backdrop-filter:blur(4px);}
+.hero-badge strong{color:var(--amber);font-size:16px;display:block;line-height:1.1;}
+.live-dot{width:7px;height:7px;background:#2ecc71;border-radius:50%;display:inline-block;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* TABS */
+.tabs-bar{background:var(--forest);position:sticky;top:0;z-index:200;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.tabs-bar::-webkit-scrollbar{display:none;}
+.tabs{display:flex;min-width:max-content;padding:0 4px;}
+.tab{padding:13px 14px;font-size:13px;font-weight:500;color:rgba(255,255,255,.45);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .2s;user-select:none;}
+.tab.active{color:var(--amber);border-bottom-color:var(--amber);}
+.tab:hover:not(.active){color:rgba(255,255,255,.8);}
+.tab-admin{color:rgba(200,180,255,.4)!important;}
+.tab-admin.active{color:#b8adff!important;border-bottom-color:#b8adff!important;}
+
+/* CONTENT */
+.page{max-width:720px;margin:0 auto;padding:14px 12px 90px;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* SEARCH */
+.search-row{position:relative;margin-bottom:12px;}
+.search-row svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+.search-inp{width:100%;padding:10px 12px 10px 36px;border:1.5px solid var(--border);border-radius:var(--r);background:var(--card);font-family:'Outfit',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;}
+.search-inp:focus{border-color:var(--emerald);}
+.search-inp::placeholder{color:var(--muted);}
+
+/* LEGEND */
+.legend{display:flex;gap:12px;font-size:11px;color:var(--muted);margin-bottom:10px;flex-wrap:wrap;}
+.leg{display:flex;align-items:center;gap:4px;}
+.leg-dot{width:9px;height:9px;border-radius:50%;}
+
+/* REGISTRY TABLE */
+.reg-wrap{background:var(--card);border-radius:var(--r);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow);}
+.reg-head{padding:8px 12px;background:var(--forest);font-size:9.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.65);display:grid;gap:4px;}
+.reg-row{padding:9px 12px;font-size:13px;display:grid;gap:4px;border-top:1px solid var(--border);align-items:center;transition:background .15s;}
+.reg-row:hover{background:var(--cream);}
+.dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin:0 auto;transition:all .15s;}
+.dot.paid{background:var(--paid-bg);color:var(--paid-fg);}
+.dot.unpaid{background:var(--unpaid-bg);color:var(--unpaid-fg);}
+.dot.na{background:#e8e8f0;color:#555580;}
+.dot.empty{background:#ebebeb;color:#bbb;}
+/* Admin edit mode: dots become tappable */
+.edit-mode .dot{cursor:pointer;transform:scale(1);}
+.edit-mode .dot:active{transform:scale(.85);}
+.edit-mode .dot.paid{box-shadow:0 0 0 2px var(--paid-fg);}
+.edit-mode .dot.unpaid{box-shadow:0 0 0 2px var(--unpaid-fg);}
+.name-last{font-weight:600;color:var(--forest);}
+.name-given{color:var(--muted);font-size:12px;}
+
+/* CAT SECTION */
+.year-filter-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;}
+.year-filter-row::-webkit-scrollbar{display:none;}
+.year-filter-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+.year-pills{display:flex;gap:6px;flex-wrap:nowrap;}
+.year-pill{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--muted);transition:all .18s;user-select:none;white-space:nowrap;}
+.year-pill.active{background:var(--ink);color:var(--amber);border-color:var(--ink);}
+.cat-pills{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+.cat-pill{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--muted);transition:all .18s;user-select:none;}
+.cat-pill.active{background:var(--forest);color:var(--amber);border-color:var(--forest);}
+.cat-pill.active.c0{background:#1a3a2a;border-color:#1a3a2a;color:#f0b429;}
+.cat-pill.active.c1{background:#1a2a3a;border-color:#1a2a3a;color:#6ab8f7;}
+.cat-pill.active.c2{background:#3a1a2a;border-color:#3a1a2a;color:#f79ed4;}
+.cat-pill.active.c3{background:#3a2a1a;border-color:#3a2a1a;color:#f7c96a;}
+.cat-pill.active.c4{background:#2a1a3a;border-color:#2a1a3a;color:#c49ef7;}
+.cat-pill.active.c5{background:#1a3a35;border-color:#1a3a35;color:#6af7e8;}
+.cat-pill.active.c6{background:#3a1a1a;border-color:#3a1a1a;color:#f78080;}
+.cat-pill.active.c7{background:#2a3a1a;border-color:#2a3a1a;color:#b8f76a;}
+.cat-pill.p0{border-color:#2d9e68;color:#1a3a2a;}
+.cat-pill.p1{border-color:#2d6e9e;color:#1a2a3a;}
+.cat-pill.p2{border-color:#9e2d6e;color:#3a1a2a;}
+.cat-pill.p3{border-color:#9e6e2d;color:#3a2a1a;}
+.cat-pill.p4{border-color:#6e2d9e;color:#2a1a3a;}
+.cat-pill.p5{border-color:#2d9e8a;color:#1a3a35;}
+.cat-pill.p6{border-color:#9e2d2d;color:#3a1a1a;}
+.cat-pill.p7{border-color:#7a9e2d;color:#2a3a1a;}
+.cat-sec{background:var(--card);border-radius:var(--r);border:1px solid var(--border);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow);}
+.cat-head{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.cat-head.c0{background:linear-gradient(90deg,#1a3a2a,#2d9e68);}
+.cat-head.c1{background:linear-gradient(90deg,#1a2a3a,#2d6e9e);}
+.cat-head.c2{background:linear-gradient(90deg,#3a1a2a,#9e2d6e);}
+.cat-head.c3{background:linear-gradient(90deg,#3a2a1a,#9e6e2d);}
+.cat-head.c4{background:linear-gradient(90deg,#2a1a3a,#6e2d9e);}
+.cat-head.c5{background:linear-gradient(90deg,#1a3a35,#2d9e8a);}
+.cat-head.c6{background:linear-gradient(90deg,#3a1a1a,#9e2d2d);}
+.cat-head.c7{background:linear-gradient(90deg,#2a3a1a,#7a9e2d);}
+.cat-title{color:#fff;font-family:'Fraunces',serif;font-size:15px;line-height:1.2;flex:0 0 auto;display:flex;align-items:center;gap:7px;}
+.cat-year-tag{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);padding:2px 7px;border-radius:20px;}
+.cat-total-center{display:flex;flex-direction:column;align-items:center;flex:1;text-align:center;}
+.cat-total-label{color:rgba(255,255,255,.65);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.cat-total-main{color:var(--amber);font-size:18px;font-weight:700;font-family:'Outfit',sans-serif;letter-spacing:-0.3px;line-height:1;}
+.cat-badges{display:flex;gap:5px;}
+.cbadge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.cbadge.paid{background:var(--paid-bg);color:var(--paid-fg);}
+.cbadge.unpaid{background:var(--unpaid-bg);color:var(--unpaid-fg);}
+.cbadge.n{background:rgba(255,255,255,.12);color:rgba(255,255,255,.75);}
+.cbadge.na{background:#e8e8f0;color:#555580;}
+.cat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--border);font-size:13px;transition:background .15s;}
+.cat-row:hover{background:var(--cream);}
+.spill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.spill.paid{background:var(--paid-bg);color:var(--paid-fg);}
+.spill.unpaid{background:var(--unpaid-bg);color:var(--unpaid-fg);}
+.spill.na{background:#e8e8f0;color:#555580;}
+.spill.empty{background:#f0f0f0;color:#999;}
+/* Edit mode: pills tappable */
+.edit-mode .spill{cursor:pointer;}
+.edit-mode .spill:active{opacity:.7;}
+.edit-mode .amt-val{cursor:pointer;text-decoration:underline dotted var(--emerald);}
+.cat-col-head{display:grid;grid-template-columns:1fr 110px 100px;padding:6px 14px;background:var(--cream);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--border);}
+.cat-row{display:grid!important;grid-template-columns:1fr 110px 100px;align-items:center;}
+
+.amt-val{font-size:13px;color:var(--forest);font-weight:500;}
+.p-col-head{display:grid;grid-template-columns:1fr 110px 100px;padding:6px 16px;background:var(--cream);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--border);}
+.p-row{display:grid!important;grid-template-columns:1fr 110px 100px;align-items:center;}
+
+/* MEMBER LOOKUP */
+.mem-sel{width:100%;padding:11px 36px 11px 14px;border:1.5px solid var(--border);border-radius:var(--r);background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a7060' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;appearance:none;font-family:'Outfit',sans-serif;font-size:14px;color:var(--ink);outline:none;margin-bottom:13px;cursor:pointer;}
+.mem-sel:focus{border-color:var(--emerald);}
+.profile-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);}
+.profile-top{background:linear-gradient(135deg,var(--forest),var(--emerald));padding:16px;display:flex;gap:12px;align-items:center;}
+.avatar{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:18px;color:var(--amber);font-weight:700;border:2px solid rgba(255,255,255,.25);flex-shrink:0;}
+.p-last{font-family:'Fraunces',serif;font-size:18px;color:#fff;line-height:1.1;}
+.p-given{font-size:12px;color:rgba(255,255,255,.65);margin-top:2px;}
+.p-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-top:1px solid var(--border);font-size:13px;}
+.p-total{background:var(--cream);padding:12px 16px;display:flex;justify-content:space-between;font-weight:600;border-top:2px solid var(--border);font-size:14px;}
+.p-count{color:var(--emerald);}
+/* Edit mode: spills tappable in profile */
+.edit-mode .p-row .spill{cursor:pointer;}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:38px 20px;color:var(--muted);}
+.empty .ei{font-size:34px;margin-bottom:10px;}
+
+/* ══ ADMIN PANEL ═══════════════════════════════════════ */
+#view-admin{background:#111827;min-height:calc(100vh - 130px);margin:-14px -12px;padding:20px 14px 80px;}
+
+/* Login gate */
+.gate{max-width:340px;margin:50px auto 0;text-align:center;}
+.gate-icon{font-size:44px;margin-bottom:14px;}
+.gate h2{color:#fff;font-family:'Fraunces',serif;font-size:22px;margin-bottom:5px;}
+.gate p{color:rgba(255,255,255,.4);font-size:13px;margin-bottom:20px;}
+.pin-row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;}
+.pin-box{width:52px;height:64px;border:2px solid rgba(255,255,255,.15);border-radius:10px;background:rgba(255,255,255,.05);color:#fff;font-size:28px;font-weight:600;text-align:center;outline:none;font-family:'Outfit',sans-serif;transition:border-color .2s;}
+.pin-box:focus{border-color:var(--amber);}
+.pin-err{color:#ff7c7c;font-size:13px;margin-top:6px;min-height:20px;}
+
+/* Admin body */
+.adm-body{max-width:680px;margin:0 auto;}
+.adm-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.adm-topbar h2{color:#fff;font-family:'Fraunces',serif;font-size:20px;}
+.adm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+.astat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;text-align:center;}
+.astat strong{display:block;font-size:20px;font-weight:700;color:var(--amber);}
+.astat span{font-size:11px;color:rgba(255,255,255,.4);}
+.adm-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:16px;margin-bottom:14px;}
+.adm-card h3{color:#fff;font-size:14px;font-weight:600;margin-bottom:4px;}
+.adm-card p{color:rgba(255,255,255,.4);font-size:12px;margin-bottom:12px;line-height:1.55;}
+.adm-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* Edit mode banner */
+.edit-banner{background:linear-gradient(90deg,var(--emerald),var(--jade));padding:10px 14px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:44px;z-index:199;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.edit-banner p{color:#fff;font-size:13px;font-weight:500;}
+.edit-banner p span{color:rgba(255,255,255,.7);font-size:11px;display:block;}
+
+/* Member form */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .15s;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:#fff;width:100%;max-width:500px;border-radius:18px 18px 0 0;padding:20px;max-height:85vh;overflow-y:auto;animation:slideUp .2s;}
+@keyframes slideUp{from{transform:translateY(30px)}to{transform:translateY(0)}}
+.modal h3{font-family:'Fraunces',serif;font-size:18px;color:var(--forest);margin-bottom:14px;}
+.form-field{margin-bottom:12px;}
+.form-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.form-field input,.form-field select{width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'Outfit',sans-serif;font-size:14px;color:var(--ink);outline:none;background:var(--card);transition:border-color .2s;}
+.form-field input:focus,.form-field select:focus{border-color:var(--emerald);}
+.modal-actions{display:flex;gap:10px;margin-top:16px;}
+.f2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-actions .btn{flex:1;}
+
+/* Change log */
+.clog-item{display:flex;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.55);}
+.clog-item:last-child{border-bottom:none;}
+.clog-ts{color:rgba(255,255,255,.25);white-space:nowrap;font-size:11px;}
+
+/* Toast */
+.dl-hero{background:linear-gradient(135deg,var(--forest),var(--emerald));border-radius:var(--r);padding:18px;margin-bottom:16px;}
+.dl-hero-title{color:#fff;font-family:'Fraunces',serif;font-size:18px;margin-bottom:4px;}
+.dl-hero-sub{color:rgba(255,255,255,.6);font-size:13px;}
+.dl-format-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;}
+.dl-format-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;}
+.dl-format-pills{display:flex;gap:8px;}
+.dl-pill{padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);transition:all .18s;user-select:none;}
+.dl-pill.active{background:var(--forest);color:var(--amber);border-color:var(--forest);}
+.dl-section-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-left:2px;}
+.dl-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:all .18s;box-shadow:var(--shadow);}
+.dl-card:hover{border-color:var(--emerald);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.dl-card:active{transform:none;}
+.dl-card-icon{font-size:22px;flex-shrink:0;}
+.dl-card-info{flex:1;}
+.dl-card-title{font-weight:600;font-size:14px;color:var(--ink);margin-bottom:2px;}
+.dl-card-sub{font-size:12px;color:var(--muted);}
+.dl-card-arrow{font-size:18px;color:var(--emerald);font-weight:700;flex-shrink:0;}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--forest);color:#fff;padding:11px 22px;border-radius:30px;font-size:13px;font-weight:500;z-index:9999;transition:transform .28s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.3);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.ok{background:var(--emerald);}
+.toast.err{background:#c0392b;}
+
+/* Connection badge */
+.conn{position:fixed;bottom:10px;right:10px;background:var(--forest);color:#fff;font-size:10px;padding:4px 10px;border-radius:20px;z-index:500;display:flex;align-items:center;gap:5px;box-shadow:var(--shadow);}
+
+@media(max-width:400px){.adm-stats{grid-template-columns:repeat(2,1fr);}.f-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     SETUP SCREEN (shown on first visit)
+══════════════════════════════════════════════════ -->
+<div id="setupScreen">
+  <div class="setup-inner">
+    <div class="setup-logo">Wonya Etome<span>Registry · Initial Setup</span></div>
+
+    <div class="setup-card">
+      <h3>🔥 Step 1 — Create a free Firebase project</h3>
+      <p>Firebase is Google's free database that syncs updates to all WhatsApp members instantly.</p>
+      <div class="setup-step"><div class="step-num">1</div><div class="step-txt">Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> and click <strong>Add project</strong></div></div>
+      <div class="setup-step"><div class="step-num">2</div><div class="step-txt">Name it <code>wonya-etome</code> · disable Google Analytics · click <strong>Create project</strong></div></div>
+      <div class="setup-step"><div class="step-num">3</div><div class="step-txt">Click <strong>Build → Realtime Database → Create database</strong> · choose any location · start in <strong>test mode</strong></div></div>
+      <div class="setup-step"><div class="step-num">4</div><div class="step-txt">Click the ⚙️ gear → <strong>Project settings</strong> → scroll to <em>Your apps</em> → click <strong>&lt;/&gt; Web</strong> → register app → copy the <code>firebaseConfig</code> object</div></div>
+    </div>
+
+    <div class="setup-card" style="margin-top:14px;">
+      <h3>📋 Step 2 — Paste your Firebase config</h3>
+      <p>Paste the entire <code>const firebaseConfig = { … }</code> object (or just the JSON inside the braces).</p>
+      <textarea class="setup-textarea" id="configInput" placeholder='Paste config here, e.g.:
+{
+  apiKey: "AIzaSy...",
+  authDomain: "wonya-etome.firebaseapp.com",
+  databaseURL: "https://wonya-etome-default-rtdb.firebaseio.com",
+  projectId: "wonya-etome",
+  ...
+}'></textarea>
+    </div>
+
+    <div class="setup-card" style="margin-top:14px;">
+      <h3>🔐 Step 3 — Set admin PIN</h3>
+      <p>Choose a 4–6 digit PIN for authorized editors. You can add more admins later from the Admin panel. Share this PIN only with trusted members.</p>
+      <div class="f-row">
+        <div>
+          <div class="f-label">Admin PIN</div>
+          <input type="password" class="f-input" id="setupPin" placeholder="e.g. 2026" maxlength="8" inputmode="numeric">
+        </div>
+        <div>
+          <div class="f-label">Confirm PIN</div>
+          <input type="password" class="f-input" id="setupPin2" placeholder="Re-enter PIN" maxlength="8" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-err" id="setupErr"></div>
+    <button class="btn btn-amber btn-full" style="margin-top:14px;font-size:15px;padding:14px;" onclick="runSetup()" id="setupBtn">
+      🚀 Initialise Registry
+    </button>
+    <p style="color:rgba(255,255,255,.3);font-size:11px;text-align:center;margin-top:12px;">This setup runs once. Data is stored in your Firebase project.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════════════ -->
+<div id="appShell">
+
+  <div class="hero">
+    <div class="hero-top">
+      <div class="hero-eyebrow"><span class="live-dot"></span> &nbsp;Live Registry</div>
+      <div class="hero-title">Wonya <em>Etome</em><br>Member Registry 2026</div>
+      <div class="hero-badges">
+        <div class="hero-badge"><strong id="hMembers">—</strong>Members</div>
+        <div class="hero-badge"><strong id="hCats">—</strong>Categories</div>
+        <div class="hero-badge"><strong id="hPaid">—</strong>Paid entries</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit mode banner (shown when admin is in edit mode) -->
+  <div class="edit-banner" id="editBanner" style="display:none">
+    <p>✏️ Edit Mode Active <span>Tap any status dot or pill to toggle</span></p>
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;" onclick="exitEditMode()">Done</button>
+  </div>
+
+  <div class="tabs-bar">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'registry')">📋 Registry</div>
+      <div class="tab" onclick="switchTab(this,'categories')">📂 Categories</div>
+      <div class="tab" onclick="switchTab(this,'lookup')">🔍 Lookup</div>
+      <div class="tab" onclick="switchTab(this,'downloads')">⬇️ Download</div>
+      <div class="tab tab-admin" onclick="switchTab(this,'admin')">🔐 Admin</div>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <!-- ── REGISTRY ── -->
+    <div id="view-registry" class="view active">
+      <div class="search-row">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" class="search-inp" id="searchInp" placeholder="Search members…" oninput="renderRegistry()">
+      </div>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:var(--paid-fg)"></div>P = Paid</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--unpaid-fg)"></div>U = Unpaid</div>
+        <div class="leg"><div class="leg-dot" style="background:#555580"></div>— = N/A</div>
+        <div class="leg"><div class="leg-dot" style="background:#ccc"></div>· = Pending</div>
+      </div>
+      <div id="registryOut"></div>
+    </div>
+
+    <!-- ── CATEGORIES ── -->
+    <div id="view-categories" class="view">
+      <div class="year-filter-row">
+        <span class="year-filter-label">Year</span>
+        <div class="year-pills" id="yearPills"></div>
+      </div>
+      <div class="cat-pills" id="catPills"></div>
+      <div id="categoryOut"></div>
+    </div>
+
+    <!-- ── LOOKUP ── -->
+    <div id="view-lookup" class="view">
+      <select class="mem-sel" id="memSel" onchange="renderProfile()">
+        <option value="">— Select a member —</option>
+      </select>
+      <div id="profileOut"></div>
+    </div>
+
+    <!-- ── DOWNLOADS ── -->
+    <div id="view-downloads" class="view">
+      <div class="dl-hero">
+        <div class="dl-hero-title">⬇️ Download Registry Data</div>
+        <p class="dl-hero-sub">Export member lists and category reports in your preferred format.</p>
+      </div>
+
+      <!-- Format selector -->
+      <div class="dl-format-row">
+        <div class="dl-format-label">Format</div>
+        <div class="dl-format-pills">
+          <div class="dl-pill active" onclick="setFmt('txt',this)">TXT</div>
+          <div class="dl-pill" onclick="setFmt('csv',this)">CSV</div>
+          <div class="dl-pill" onclick="setFmt('xlsx',this)">XLSX</div>
+        </div>
+      </div>
+
+      <!-- All members -->
+      <div class="dl-section-label">MEMBER LISTS</div>
+      <div class="dl-card" onclick="downloadAllNames()">
+        <div class="dl-card-icon">👥</div>
+        <div class="dl-card-info">
+          <div class="dl-card-title">All Members</div>
+          <div class="dl-card-sub">Full list of all members sorted A–Z by last name</div>
+        </div>
+        <div class="dl-card-arrow">→</div>
+      </div>
+
+      <!-- Per-category downloads -->
+      <div class="dl-section-label" style="margin-top:18px">BY CATEGORY</div>
+      <div id="dlCatList"></div>
+
+      <!-- Full registry -->
+      <div class="dl-section-label" style="margin-top:18px">FULL REGISTRY</div>
+      <div class="dl-card" onclick="downloadFullRegistry()">
+        <div class="dl-card-icon">📋</div>
+        <div class="dl-card-info">
+          <div class="dl-card-title">Complete Registry</div>
+          <div class="dl-card-sub">All members × all categories with status and amounts</div>
+        </div>
+        <div class="dl-card-arrow">→</div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN ── -->
+    <div id="view-admin" class="view">
+
+      <!-- Gate -->
+      <div id="adminGate">
+        <div class="gate">
+          <div class="gate-icon">🔐</div>
+          <h2>Admin Access</h2>
+          <p>Enter your admin PIN to manage the registry</p>
+          <div class="pin-row">
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric" id="p1" oninput="pinNext(this,'p2')" onkeydown="pinKey(event,this,null)">
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric" id="p2" oninput="pinNext(this,'p3')" onkeydown="pinKey(event,this,'p1')">
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric" id="p3" oninput="pinNext(this,'p4')" onkeydown="pinKey(event,this,'p2')">
+            <input type="password" class="pin-box" maxlength="1" inputmode="numeric" id="p4" oninput="pinNext(this,'p5')" onkeydown="pinKey(event,this,'p3')">
+          </div>
+          <div class="pin-err" id="pinErr"></div>
+          <button class="btn btn-amber btn-full" style="margin-top:4px;" onclick="checkPin()">Unlock</button>
+        </div>
+      </div>
+
+      <!-- Panel -->
+      <div id="adminPanel" style="display:none">
+        <div class="adm-body">
+          <div class="adm-topbar">
+            <h2>⚙️ Admin Panel</h2>
+            <button class="btn btn-sm btn-ghost" onclick="adminLogout()">Log out</button>
+          </div>
+          <div class="adm-stats">
+            <div class="astat"><strong id="aM">—</strong><span>Members</span></div>
+            <div class="astat"><strong id="aC">—</strong><span>Categories</span></div>
+            <div class="astat"><strong id="aP">—</strong><span>Paid</span></div>
+          </div>
+
+          <!-- EDIT MODE -->
+          <div class="adm-card">
+            <h3>✏️ Edit Registry Directly</h3>
+            <p>Enable edit mode to tap any payment status in the Registry or Category tabs to toggle it between Paid, Unpaid, and Pending. Changes sync to all users instantly.</p>
+            <div class="adm-actions">
+              <button class="btn btn-emerald" onclick="enterEditMode()">Enable Edit Mode</button>
+            </div>
+          </div>
+
+          <!-- ADD MEMBER -->
+          <div class="adm-card">
+            <h3>👤 Add New Member</h3>
+            <p>Add a member to the registry. They will appear in all views immediately.</p>
+            <div class="adm-actions">
+              <button class="btn btn-amber" onclick="openAddMember()">+ Add Member</button>
+            </div>
+          </div>
+
+          <!-- ADD CATEGORY -->
+          <div class="adm-card">
+            <h3>📂 Add New Category</h3>
+            <p>Add a new payment category (e.g. a new event or fund). All existing members will have their status for this category set to Pending.</p>
+            <div class="adm-actions">
+              <button class="btn btn-amber" onclick="openAddCategory()">+ Add Category</button>
+            </div>
+          </div>
+
+          <!-- MANAGE ADMINS -->
+          <div class="adm-card">
+            <h3>🔑 Manage Admin PINs</h3>
+            <p>Add PINs for other authorized editors. Each person gets their own PIN. PINs are hashed — they cannot be read, only verified.</p>
+            <div class="adm-actions">
+              <button class="btn btn-ghost" onclick="openAddPin()">+ Add Another PIN</button>
+            </div>
+          </div>
+
+          <!-- EDIT CATEGORY -->
+          <div class="adm-card">
+            <h3>🏷️ Edit Category Name / Year</h3>
+            <p>Rename an existing category or change its year tag. All member data for this category is preserved.</p>
+            <div class="adm-actions">
+              <button class="btn btn-amber" onclick="openEditCategory()">Edit Category</button>
+            </div>
+          </div>
+
+          <!-- EDIT MEMBER NAME -->
+          <div class="adm-card">
+            <h3>✏️ Edit Member Name</h3>
+            <p>Correct the spelling of an existing member's first or last name. All their payment data is preserved.</p>
+            <div class="adm-actions">
+              <button class="btn btn-amber" onclick="openEditMember()">Edit Member Name</button>
+            </div>
+          </div>
+
+          <!-- DANGER ZONE -->
+          <div class="adm-card">
+            <h3>🗑️ Remove Member / Category</h3>
+            <p>Select and permanently remove a member or category from the registry. This cannot be undone.</p>
+            <div class="adm-actions">
+              <button class="btn btn-sm btn-danger" onclick="openRemoveMember()">Remove Member</button>
+              <button class="btn btn-sm btn-danger" onclick="openRemoveCategory()">Remove Category</button>
+            </div>
+          </div>
+
+          <!-- CHANGELOG -->
+          <div class="adm-card">
+            <h3>📝 Recent Changes</h3>
+            <p>Last 20 edits made to the registry.</p>
+            <div id="changelog"><p style="color:rgba(255,255,255,.3);font-size:13px;">No changes yet.</p></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /admin -->
+
+  </div><!-- /page -->
+</div><!-- /appShell -->
+
+<!-- ── MODALS ── -->
+<div id="modalOverlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── CONNECTION INDICATOR ── -->
+<div class="conn" id="connBadge" style="display:none"><span class="live-dot"></span> Live</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  CONFIG & CONSTANTS
+// ════════════════════════════════════════════════════════
+const STORE   = 'wonya_cfg_v1';
+const DB_PATH = 'registry';
+
+const DEFAULT_CATS = ["Registration","Social Fund","Ndolo","Ma Likowo","Ekese"];
+const DEFAULT_MEMBERS = [
+  ["Efoe","Isaac"],["Endeley","Lety Eposi"],["Essame","Eposi"],
+  ["Evakise","Teke Braindt"],["Ikome","Emilia Evenye"],["Jackai","Michael"],
+  ["Koffi","Beatrice"],["Koffi","Elizabeth"],["Koffi","John Njie"],
+  ["Koffi","Julius Likafi"],["Koffi","Penda Max"],["Koffi","Thomas Koffi"],
+  ["Litumbe","Daniel Ekese"],["Litumbe","Embelle"],["Litumbe","Enany Limunga"],
+  ["Litumbe","Hannah Eposi"],["Litumbe","Litombo Njie"],["Litumbe","Mafany"],
+  ["Litumbe","Mary Enjema"],["Litumbe","Sally"],["Matute","Rose Ateh"],
+  ["Mbua","Mwende Ebenezer"],["Mbwaye","Agnes Nduma"],["Mbwaye","Eric"],
+  ["Mbwaye","Eposi Martha"],["Mbwaye","Florence Eposi"],["Mbwaye","George Njie"],
+  ["Mbwaye","Hannah Wotany"],["Mbwaye","John Dualla"],["Mbwaye","Lilian Mojoko"],
+  ["Mbwaye","Lyonga Raymond"],["Mbwaye","Mbella G"],["Mbwaye","Molonga Mokoko"],
+  ["Mbwaye","Ndolo"],["Mbwaye","Nekoli Francis"],["Mbwaye","Ngo'ou David"],
+  ["Mbwaye","Rose Monono"],["Mbwaye","Sally Nanyongo"],["Mehende","Bridget"],
+  ["Mehende","Dora"],["Mehende","Robert Ngomba"],["Mefondo","Divine"],
+  ["Mokake","John Otto"],["Mokonya","Eposi"],["Mokonya","Mary"],
+  ["Molua","Johnson Lifanje"],["Mongombe","Hannah"],["Mongombe","Martha"],
+  ["Mongombe","Thompson Ekonde"],["Mongombe","Wana"],["Mwambo","Iya"],
+  ["Mwambo","Mokako Marcus"],["Mwambo","Simon"],["Ndeley","Genty Eyole"],
+  ["Ndive","France Koffi"],["Ndive","Mbua Robert"],["Ndumbe","Sako"],
+  ["Nganje","Francis Likoko"],["Ngoisa","Samuel"],["Njie","Clara"],
+  ["Njie","Sako Frank"],["Ogen","Joe Likoko"],["Ogen","Max Motove"],
+  ["Ogen","Namondo Ngoumba"],["Quan","Etombi Lillian"],
+  ["Tamfuh","Sallian Enanga"],["Teke","Imbolo Hannah"]
+];
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let db          = null;
+let state       = { categories:[], members:{} };
+let isAdmin     = false;
+let editMode    = false;
+let activeCatI  = null;
+let activeYear  = 'All';
+let cfg         = null;
+
+// ════════════════════════════════════════════════════════
+//  CRYPTO HELPERS
+// ════════════════════════════════════════════════════════
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  SETUP
+// ════════════════════════════════════════════════════════
+async function runSetup() {
+  const btn = document.getElementById('setupBtn');
+  const err = document.getElementById('setupErr');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Setting up…';
+
+  try {
+    // Parse config — robust: handles JS object literals, unquoted keys, https: in values
+    let raw = document.getElementById('configInput').value.trim();
+    raw = raw.replace(/^(?:const|let|var)\s+\w+\s*=\s*/,'').replace(/;+\s*$/,'').trim();
+    let config;
+    try {
+      config = (new Function('return (' + raw + ')'))();
+    } catch(e) {
+      throw new Error('Could not parse config: ' + e.message + '. Paste the full firebaseConfig object exactly as copied from Firebase.');
+    }
+    if (typeof config !== 'object' || !config) throw new Error('Config must be a { } object.');
+    if (!config.databaseURL) throw new Error('Missing databaseURL. Open Firebase → Realtime Database and copy the URL shown at the top, then add: databaseURL: "https://..." to your config.');
+    if (!config.apiKey)      throw new Error('Missing apiKey in config.');
+
+    // Validate PINs
+    const pin1 = document.getElementById('setupPin').value.trim();
+    const pin2 = document.getElementById('setupPin2').value.trim();
+    if (pin1.length < 4) throw new Error('PIN must be at least 4 digits.');
+    if (pin1 !== pin2)   throw new Error('PINs do not match.');
+
+    // Init Firebase
+    if (!firebase.apps.length) firebase.initializeApp(config);
+    const testDb = firebase.database();
+    const hash   = await sha256(pin1);
+
+    // Seed data into Firebase
+    const seed = {
+      categories: DEFAULT_CATS,
+      members: {},
+      admins: { [hash]: { created: new Date().toISOString(), label:'Admin 1' } },
+      changelog: []
+    };
+    DEFAULT_MEMBERS.forEach(([l,g]) => {
+      const id = `m_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+      seed.members[id] = {
+        last: l, given: g,
+        status:  Object.fromEntries(DEFAULT_CATS.map(c=>[c,''])),
+        amounts: Object.fromEntries(DEFAULT_CATS.map(c=>[c,0]))
+      };
+    });
+    await testDb.ref(DB_PATH).set(seed);
+
+    // Save config
+    localStorage.setItem(STORE, JSON.stringify(config));
+    toast('Registry initialised! 🎉','ok');
+    setTimeout(() => location.reload(), 1200);
+
+  } catch(e) {
+    err.textContent = '❌ ' + e.message;
+    btn.disabled = false; btn.textContent = '🚀 Initialise Registry';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════════
+async function boot() {
+  // ── Hardcoded config — works on every device, no setup needed ──
+  cfg = {
+    apiKey:            "AIzaSyAU6kK9Gt6wFMqpQfc_9OBN93rSyGVDcmk",
+    authDomain:        "wonya-etome.firebaseapp.com",
+    databaseURL:       "https://wonya-etome-default-rtdb.firebaseio.com",
+    projectId:         "wonya-etome",
+    storageBucket:     "wonya-etome.firebasestorage.app",
+    messagingSenderId: "491955497055",
+    appId:             "1:491955497055:web:c7c3dd42410625061893ea"
+  };
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('appShell').style.display    = 'block';
+  document.getElementById('connBadge').style.display   = 'flex';
+
+  if (!firebase.apps.length) firebase.initializeApp(cfg);
+  db = firebase.database();
+
+  // Real-time listener — single listener on full registry
+  db.ref(DB_PATH).on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+    state.categories = data.categories || [];
+    // Normalise members object
+    const raw = data.members || {};
+    state.members = {};
+    Object.entries(raw).forEach(([id, m]) => {
+      state.members[id] = {
+        id, last:m.last||'', given:m.given||'',
+        status: m.status || {},
+        amounts: m.amounts || {}
+      };
+    });
+    state.admins         = data.admins         || {};
+    state.changelog      = data.changelog      || [];
+    state.categoryYears  = data.categoryYears  || {};
+    renderAll();
+    if (isAdmin) refreshAdminStats();
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  SORTED MEMBER LIST
+// ════════════════════════════════════════════════════════
+function sortedMembers() {
+  return Object.values(state.members).sort((a,b) =>
+    a.last.localeCompare(b.last) || a.given.localeCompare(b.given));
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER HELPERS
+// ════════════════════════════════════════════════════════
+function statusCycle(cur) {
+  if (cur === 'Paid')   return 'Unpaid';
+  if (cur === 'Unpaid') return 'N/A';
+  if (cur === 'N/A')    return '';
+  return 'Paid';
+}
+function dotHTML(s, id, cat) {
+  const cls = s==='Paid'?'paid':s==='Unpaid'?'unpaid':s==='N/A'?'na':'empty';
+  const lbl = s==='Paid'?'P':s==='Unpaid'?'U':s==='N/A'?'—':'·';
+  const edit = editMode ? `class="dot ${cls} editable" data-mid="${id}" data-cat="${cat}"` : `class="dot ${cls}"`;
+  return `<div ${edit} title="${cat}: ${s||'Not set'}">${lbl}</div>`;
+}
+function spillHTML(s, id, cat) {
+  const cls = s==='Paid'?'paid':s==='Unpaid'?'unpaid':s==='N/A'?'na':'empty';
+  const lbl = s==='Paid'?'✓ Paid':s==='Unpaid'?'✗ Unpaid':s==='N/A'?'— N/A':'· Pending';
+  const edit = editMode ? `class="spill ${cls} editable" data-mid="${id}" data-cat="${cat}"` : `class="spill ${cls}"`;
+  return `<span ${edit}>${lbl}</span>`;
+}
+function cfa(n) {
+  if (!n && n !== 0) return '—';
+  const num = parseInt(n) || 0;
+  return num.toLocaleString('en-US') + ' CFA';
+}
+function amountHTML(amt, id, cat) {
+  const display = amt ? cfa(amt) : (editMode ? '<span style="color:#bbb;font-size:11px">+ Amount</span>' : '<span style="color:#ccc;font-size:11px">—</span>');
+  const edit = editMode ? `class="amt-val amt-editable" data-amid="${id}" data-acat="${cat}" style="cursor:pointer"` : `class="amt-val"`;
+  return `<span ${edit}>${display}</span>`;
+}
+
+// Delegated click for amount editing
+document.addEventListener('click', function(e) {
+  const el = e.target.closest('.amt-editable');
+  if (!el || !editMode) return;
+  editAmount(el.dataset.amid, el.dataset.acat);
+});
+function countPaid() {
+  return Object.values(state.members).reduce((n,m) =>
+    n + Object.values(m.status).filter(s=>s==='Paid').length, 0);
+}
+function updateHero() {
+  const members = Object.values(state.members);
+  document.getElementById('hMembers').textContent = members.length;
+  document.getElementById('hCats').textContent    = state.categories.length;
+  document.getElementById('hPaid').textContent    = countPaid();
+}
+
+// ════════════════════════════════════════════════════════
+//  REGISTRY
+// ════════════════════════════════════════════════════════
+function renderRegistry() {
+  const cats = state.categories;
+  const n    = cats.length;
+  const q    = (document.getElementById('searchInp').value||'').toLowerCase();
+  const rows = sortedMembers().filter(m =>
+    !q || m.last.toLowerCase().includes(q) || m.given.toLowerCase().includes(q));
+  const catW = n > 0 ? Math.max(36, Math.min(56, Math.floor(220/n))) + 'px' : '0';
+  const grid = `grid-template-columns: 1fr 1fr repeat(${n}, ${catW})`;
+  const cls  = editMode ? 'reg-wrap edit-mode' : 'reg-wrap';
+
+  const head = `<div class="reg-head" style="${grid}">
+    <div>Last Name</div><div>Given Name</div>
+    ${cats.map(c=>`<div style="text-align:center;font-size:9px">${c.length>6?c.slice(0,5)+'…':c}</div>`).join('')}
+  </div>`;
+
+  const body = rows.length ? rows.map(m =>
+    `<div class="reg-row" style="${grid}">
+      <div class="name-last">${m.last}</div>
+      <div class="name-given">${m.given}</div>
+      ${cats.map(c => `<div>${dotHTML(m.status[c]||'', m.id, c)}</div>`).join('')}
+    </div>`).join('') : '';
+
+  document.getElementById('registryOut').innerHTML = rows.length
+    ? `<div class="${cls}">${head}${body}</div>`
+    : `<div class="empty"><div class="ei">🔍</div><p>No members match.</p></div>`;
+}
+
+// ════════════════════════════════════════════════════════
+//  CATEGORIES
+// ════════════════════════════════════════════════════════
+const YEARS = ['All','2025','2026','2027','2028','2029','2030','2031','2032','2033','2034','2035','2036','2037','2038','2039','2040'];
+
+function buildYearPills() {
+  const el = document.getElementById('yearPills');
+  if (!el) return;
+  el.innerHTML = YEARS.map(y =>
+    `<div class="year-pill${y===activeYear?' active':''}" onclick="selectYear('${y}',this)">${y}</div>`
+  ).join('');
+}
+function selectYear(yr, el) {
+  activeYear = yr;
+  document.querySelectorAll('.year-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  activeCatI = null; // reset cat selection when year changes
+  buildCatPills();
+  renderCategories();
+}
+function filteredCategories() {
+  if (activeYear === 'All') return state.categories;
+  return state.categories.filter(c => String(state.categoryYears[c] || '') === activeYear);
+}
+
+function buildCatPills() {
+  const cats = filteredCategories();
+  document.getElementById('catPills').innerHTML =
+    ['All',...cats].map((c,i) => {
+      const ci   = i - 1;
+      // real index in state.categories for color consistency
+      const realIdx = ci < 0 ? -1 : state.categories.indexOf(cats[ci]);
+      const pCls = i === 0 ? '' : ` p${realIdx % 8}`;
+      const aCls = i === 0 ? ' active' : '';
+      return `<div class="cat-pill${aCls}${pCls}" onclick="selectCat(${i===0?'null':ci},this)" data-cidx="${ci}" data-realidx="${realIdx}">${c}</div>`;
+    }).join('');
+}
+function selectCat(idx, el) {
+  document.querySelectorAll('.cat-pill').forEach(p => {
+    p.classList.remove('active');
+    const pci = parseInt(p.dataset.cidx);
+    if (!isNaN(pci)) { for(let k=0;k<8;k++) p.classList.remove('c'+k); p.classList.add('p'+(pci%8)); }
+  });
+  el.classList.add('active');
+  const ri = parseInt(el.dataset.realidx);
+  if (!isNaN(ri) && ri >= 0) { for(let k=0;k<8;k++) el.classList.remove('p'+k); el.classList.add('c'+(ri%8)); }
+  activeCatI = idx; renderCategories();
+}
+function renderCategories() {
+  const cats    = filteredCategories();
+  const idxs  = activeCatI===null ? cats.map((_,i)=>i) : [activeCatI];
+  const members = sortedMembers();
+  const cls   = editMode ? 'edit-mode' : '';
+  document.getElementById('categoryOut').innerHTML = idxs.map(ci => {
+    const cat    = cats[ci];
+    const realCi = state.categories.indexOf(cat);
+    const paid   = members.filter(m=>(m.status[cat]||'')==='Paid').length;
+    const unpaid = members.filter(m=>(m.status[cat]||'')==='Unpaid').length;
+    const na     = members.filter(m=>(m.status[cat]||'')==='N/A').length;
+    const total  = members.reduce((s,m)=>s+(parseInt(m.amounts[cat])||0),0);
+    const paidAmt= members.filter(m=>(m.status[cat]||'')==='Paid')
+                          .reduce((s,m)=>s+(parseInt(m.amounts[cat])||0),0);
+    const colorCls = 'c' + (realCi >= 0 ? realCi % 8 : ci % 8);
+    return `<div class="cat-sec ${cls}">
+      <div class="cat-head ${colorCls}">
+        <div class="cat-title">${cat}<span class="cat-year-tag">${state.categoryYears[cat]||''}</span></div>
+        <div class="cat-total-center">
+          <div class="cat-total-label">Total Collected</div>
+          <div class="cat-total-main">${cfa(paidAmt)}</div>
+        </div>
+        <div class="cat-badges">
+          <span class="cbadge n">${members.length}</span>
+          <span class="cbadge paid">✓ ${paid}</span>
+          <span class="cbadge unpaid">✗ ${unpaid}</span>
+          <span class="cbadge na">— ${na}</span>
+        </div>
+      </div>
+      <div class="cat-col-head">
+        <div>Member</div><div>Amount</div><div>Status</div>
+      </div>
+      ${members.map(m=>`
+        <div class="cat-row">
+          <div><span class="name-last">${m.last}</span> <span class="name-given">${m.given}</span></div>
+          ${amountHTML(m.amounts[cat], m.id, cat)}
+          ${spillHTML(m.status[cat]||'', m.id, cat)}
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  MEMBER LOOKUP
+// ════════════════════════════════════════════════════════
+function buildMemberSelect() {
+  document.getElementById('memSel').innerHTML =
+    '<option value="">— Select a member —</option>' +
+    sortedMembers().map(m =>
+      `<option value="${m.id}">${m.last}, ${m.given}</option>`).join('');
+}
+function renderProfile() {
+  const id  = document.getElementById('memSel').value;
+  const box = document.getElementById('profileOut');
+  if (!id) { box.innerHTML=''; return; }
+  const m   = state.members[id];
+  if (!m)   { box.innerHTML=''; return; }
+  const paid    = Object.values(m.status).filter(s=>s==='Paid').length;
+  const totalAmt= state.categories.reduce((s,cat)=>s+(parseInt(m.amounts[cat])||0),0);
+  const paidAmt = state.categories.filter(cat=>(m.status[cat]||'')==='Paid')
+                                   .reduce((s,cat)=>s+(parseInt(m.amounts[cat])||0),0);
+  const cls  = editMode ? 'edit-mode' : '';
+  box.innerHTML = `<div class="profile-card ${cls}">
+    <div class="profile-top">
+      <div class="avatar">${(m.last[0]||'').toUpperCase()}${(m.given[0]||'').toUpperCase()}</div>
+      <div><div class="p-last">${m.last}</div><div class="p-given">${m.given}</div></div>
+    </div>
+    <div class="p-col-head"><div>Category</div><div>Amount</div><div>Status</div></div>
+    ${state.categories.map(cat=>`
+      <div class="p-row">
+        <span style="font-weight:500">${cat}</span>
+        ${amountHTML(m.amounts[cat], m.id, cat)}
+        ${spillHTML(m.status[cat]||'', m.id, cat)}
+      </div>`).join('')}
+    <div class="p-total">
+      <span>Paid: ${paid}/${state.categories.length}</span>
+      <span class="p-count">${cfa(paidAmt)} <span style="color:var(--muted);font-size:11px;font-weight:400">of ${cfa(totalAmt)}</span></span>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER ALL
+// ════════════════════════════════════════════════════════
+function renderAll() {
+  updateHero();
+  renderRegistry();
+  buildCatPills();
+  renderCategories();
+  buildMemberSelect();
+  document.getElementById('profileOut').innerHTML = '';
+  if (document.getElementById('dlCatList')) buildDlCatList();
+  buildYearPills();
+}
+
+// ════════════════════════════════════════════════════════
+//  STATUS TOGGLE (admin edit mode)
+// ════════════════════════════════════════════════════════
+async function toggleStatus(memberId, cat) {
+  if (!editMode) return;
+  const m = state.members[memberId];
+  if (!m) return;
+  // Normalise: if status key doesn't exist yet for new category, treat as ''
+  const cur = (m.status && m.status[cat] !== undefined) ? m.status[cat] : '';
+  const nxt = statusCycle(cur);
+  try {
+    await db.ref(`${DB_PATH}/members/${memberId}/status/${cat}`).set(nxt);
+    await logChange(`${m.last}, ${m.given} · ${cat} → ${nxt||'Pending'}`);
+    toast(`${m.last}: ${cat} → ${nxt||'Pending'}`, 'ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+}
+
+// Delegated click handler for editable dots and spills
+document.addEventListener('click', function(e) {
+  const el = e.target.closest('.editable');
+  if (!el || !editMode) return;
+  const mid = el.dataset.mid;
+  const cat = el.dataset.cat;
+  if (mid && cat) toggleStatus(mid, cat);
+});
+
+// ════════════════════════════════════════════════════════
+//  AMOUNT EDIT
+// ════════════════════════════════════════════════════════
+// Pending amount save context — avoids embedding strings in onclick
+let _amtCtx = {memberId: null, cat: null};
+
+function editAmount(memberId, cat) {
+  if (!editMode) return;
+  const m = state.members[memberId];
+  if (!m) return;
+  const cur = (m.amounts && m.amounts[cat]) ? parseInt(m.amounts[cat]) : 0;
+  // Store context so saveAmount() can read it without inline string injection
+  _amtCtx = {memberId, cat};
+  openModal(`<h3>💰 Enter Amount</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:12px">${m.last}, ${m.given} — ${cat}</p>
+    <div class="form-field">
+      <label>Amount (CFA)</label>
+      <input type="number" id="amtInput" value="${cur||''}" placeholder="e.g. 5000" inputmode="numeric" min="0" step="500">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+      ${[5000,10000,15000,20000,25000].map(v=>`<button class="btn btn-sm btn-ghost" onclick="document.getElementById('amtInput').value=${v}">${cfa(v)}</button>`).join('')}
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-emerald btn-full" onclick="saveAmount()">Save</button>
+    </div>`);
+  setTimeout(()=>{const i=document.getElementById('amtInput');if(i){i.focus();i.select();}},150);
+}
+async function saveAmount() {
+  const memberId = _amtCtx.memberId;
+  const cat      = _amtCtx.cat;
+  if (!memberId || !cat) { toast('Nothing to save','err'); return; }
+  const raw = document.getElementById('amtInput').value;
+  const amt = parseInt(raw) || 0;
+  const m   = state.members[memberId];
+  if (!m) { toast('Member not found','err'); return; }
+  try {
+    await db.ref(`${DB_PATH}/members/${memberId}/amounts/${cat}`).set(amt);
+    await logChange(`${m.last}, ${m.given} · ${cat} amount → ${cfa(amt)}`);
+    _amtCtx = {memberId: null, cat: null};
+    closeModal();
+    toast(`Amount set: ${cfa(amt)}`,'ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+}
+
+// ════════════════════════════════════════════════════════
+//  EDIT MODE
+// ════════════════════════════════════════════════════════
+function enterEditMode() {
+  editMode = true;
+  document.getElementById('editBanner').style.display = 'flex';
+  renderAll();
+  // Switch to registry tab so user sees the edit mode immediately
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelector('.tab').classList.add('active');
+  document.getElementById('view-registry').classList.add('active');
+  toast('Edit mode ON — tap any status to toggle','ok');
+}
+function exitEditMode() {
+  editMode = false;
+  document.getElementById('editBanner').style.display = 'none';
+  renderAll();
+  toast('Changes saved','ok');
+}
+
+// ════════════════════════════════════════════════════════
+//  ADMIN AUTH (PIN)
+// ════════════════════════════════════════════════════════
+function pinNext(el, nextId) {
+  if (el.value.length >= 1) {
+    const nxt = document.getElementById(nextId);
+    if (nxt) nxt.focus();
+    else checkPin();
+  }
+}
+function pinKey(e, el, prevId) {
+  if (e.key==='Backspace' && el.value==='' && prevId) {
+    document.getElementById(prevId).focus();
+  }
+  if (e.key==='Enter') checkPin();
+}
+async function checkPin() {
+  const pin = ['p1','p2','p3','p4'].map(id=>document.getElementById(id).value).join('');
+  document.getElementById('pinErr').textContent = '';
+  if (pin.length < 4) {
+    document.getElementById('pinErr').textContent = 'Enter your 4-digit PIN';
+    return;
+  }
+  const hash = await sha256(pin);
+  if (state.admins[hash]) {
+    isAdmin = true;
+    document.getElementById('adminGate').style.display  = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    refreshAdminStats();
+    toast('Welcome back 👋','ok');
+  } else {
+    document.getElementById('pinErr').textContent = 'Incorrect PIN';
+    ['p1','p2','p3','p4'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('p1').focus();
+  }
+}
+function adminLogout() {
+  isAdmin = false; editMode = false;
+  document.getElementById('editBanner').style.display  = 'none';
+  document.getElementById('adminGate').style.display   = 'block';
+  document.getElementById('adminPanel').style.display  = 'none';
+  ['p1','p2','p3','p4'].forEach(id=>document.getElementById(id).value='');
+  renderAll();
+}
+function refreshAdminStats() {
+  const ms = Object.values(state.members);
+  document.getElementById('aM').textContent = ms.length;
+  document.getElementById('aC').textContent = state.categories.length;
+  document.getElementById('aP').textContent = countPaid();
+  // Changelog
+  const cl = (state.changelog||[]);
+  document.getElementById('changelog').innerHTML = cl.length
+    ? cl.slice().reverse().slice(0,20).map(e=>
+        `<div class="clog-item"><span class="clog-ts">${e.ts}</span><span>${e.msg}</span></div>`
+      ).join('')
+    : '<p style="color:rgba(255,255,255,.3);font-size:13px;">No changes yet.</p>';
+}
+
+// ════════════════════════════════════════════════════════
+//  CHANGE LOG
+// ════════════════════════════════════════════════════════
+async function logChange(msg) {
+  const ts  = new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  const log = Array.isArray(state.changelog) ? [...state.changelog] : [];
+  log.push({ts, msg});
+  if (log.length > 20) log.splice(0, log.length - 20);
+  await db.ref(`${DB_PATH}/changelog`).set(log);
+}
+
+// ════════════════════════════════════════════════════════
+//  ADD MEMBER
+// ════════════════════════════════════════════════════════
+function openAddMember() {
+  openModal(`<h3>👤 Add New Member</h3>
+    <div class="form-field"><label>Last Name</label><input type="text" id="mLast" placeholder="e.g. Mbwaye"></div>
+    <div class="form-field"><label>Given Name</label><input type="text" id="mGiven" placeholder="e.g. Eric"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-full" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-emerald btn-full" onclick="doAddMember()">Add Member</button>
+    </div>`);
+  document.getElementById('mLast').focus();
+}
+async function doAddMember() {
+  const last  = document.getElementById('mLast').value.trim();
+  const given = document.getElementById('mGiven').value.trim();
+  if (!last || !given) { toast('Both fields required','err'); return; }
+  const id     = `m_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+  const status  = Object.fromEntries(state.categories.map(c=>[c,'']));
+  const amounts = Object.fromEntries(state.categories.map(c=>[c,0]));
+  await db.ref(`${DB_PATH}/members/${id}`).set({last,given,status,amounts});
+  await logChange(`Added member: ${last}, ${given}`);
+  closeModal(); toast(`${last}, ${given} added ✓`,'ok');
+}
+
+// ════════════════════════════════════════════════════════
+//  ADD CATEGORY
+// ════════════════════════════════════════════════════════
+function openAddCategory() {
+  const yearOpts = YEARS.filter(y=>y!=='All').map(y =>
+    `<option value="${y}"${y==='2026'?' selected':''}>${y}</option>`).join('');
+  openModal(`<h3>📂 Add New Category</h3>
+    <div class="form-field"><label>Category Name</label><input type="text" id="catName" placeholder="e.g. Dinner Dance"></div>
+    <div class="form-field"><label>Year</label>
+      <select id="catYear" style="width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:14px;outline:none;background:var(--card);">
+        ${yearOpts}
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-full" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-emerald btn-full" onclick="doAddCategory()">Add Category</button>
+    </div>`);
+  document.getElementById('catName').focus();
+}
+async function doAddCategory() {
+  const name = document.getElementById('catName').value.trim();
+  const year = document.getElementById('catYear') ? document.getElementById('catYear').value : '2026';
+  if (!name) { toast('Enter a category name','err'); return; }
+  if (state.categories.includes(name)) { toast('Category already exists','err'); return; }
+  const newCats  = [...state.categories, name];
+  const newYears = Object.assign({}, state.categoryYears, {[name]: year});
+  const updates  = {};
+  updates[`${DB_PATH}/categories`]            = newCats;
+  updates[`${DB_PATH}/categoryYears`]         = newYears;
+  Object.keys(state.members).forEach(id => {
+    updates[`${DB_PATH}/members/${id}/status/${name}`]  = '';
+    updates[`${DB_PATH}/members/${id}/amounts/${name}`] = 0;
+  });
+  await db.ref().update(updates);
+  await logChange(`Added category: ${name} (${year})`);
+  closeModal(); toast(`Category "${name}" (${year}) added ✓`,'ok');
+}
+
+// ════════════════════════════════════════════════════════
+//  ADD ADMIN PIN
+// ════════════════════════════════════════════════════════
+function openAddPin() {
+  openModal(`<h3>🔑 Add Admin PIN</h3>
+    <div class="form-field"><label>Label (who is this for?)</label><input type="text" id="pinLabel" placeholder="e.g. Treasurer"></div>
+    <div class="form-field"><label>New PIN (4–8 digits)</label><input type="password" id="newPin" inputmode="numeric" maxlength="8" placeholder="····"></div>
+    <div class="form-field"><label>Confirm PIN</label><input type="password" id="newPin2" inputmode="numeric" maxlength="8" placeholder="····"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-full" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-emerald btn-full" onclick="doAddPin()">Save PIN</button>
+    </div>`);
+}
+async function doAddPin() {
+  const label = document.getElementById('pinLabel').value.trim();
+  const p1    = document.getElementById('newPin').value.trim();
+  const p2    = document.getElementById('newPin2').value.trim();
+  if (!label)       { toast('Enter a label','err'); return; }
+  if (p1.length<4)  { toast('PIN must be 4+ digits','err'); return; }
+  if (p1 !== p2)    { toast('PINs do not match','err'); return; }
+  const hash = await sha256(p1);
+  await db.ref(`${DB_PATH}/admins/${hash}`).set({created:new Date().toISOString(),label});
+  await logChange(`Added admin PIN for: ${label}`);
+  closeModal(); toast(`PIN for "${label}" added ✓`,'ok');
+}
+
+// ════════════════════════════════════════════════════════
+//  REMOVE MEMBER
+// ════════════════════════════════════════════════════════
+function openEditCategory() {
+  const catOpts = state.categories.map(c =>
+    `<option value="${c}">${c} (${state.categoryYears[c]||'—'})</option>`).join('');
+  const yearOpts = YEARS.filter(y=>y!=='All').map(y =>
+    `<option value="${y}"${y==='2026'?' selected':''}>${y}</option>`).join('');
+  openModal(`<h3>🏷️ Edit Category</h3>
+    <div class="form-field"><label>Select Category</label>
+      <select id="editCatSel" onchange="prefillCatFields()" style="width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:14px;outline:none;background:var(--card);">
+        <option value="">— Choose category —</option>${catOpts}
+      </select>
+    </div>
+    <div class="form-field"><label>New Name</label>
+      <input type="text" id="editCatName" placeholder="Category name">
+    </div>
+    <div class="form-field"><label>Year</label>
+      <select id="editCatYear" style="width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:14px;outline:none;background:var(--card);">
+        ${yearOpts}
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-full" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-emerald btn-full" onclick="doEditCategory()">Save Changes</button>
+    </div>`);
+}
+function prefillCatFields() {
+  const old = document.getElementById('editCatSel').value;
+  if (!old) return;
+  document.getElementById('editCatName').value = old;
+  const yr = state.categoryYears[old] || '2026';
+  const sel = document.getElementById('editCatYear');
+  if (sel) { for (let i=0; i<sel.options.length; i++) { if (sel.options[i].value===String(yr)) { sel.selectedIndex=i; break; } } }
+}
+async function doEditCategory() {
+  const oldName = document.getElementById('editCatSel').value;
+  const newName = document.getElementById('editCatName').value.trim();
+  const newYear = document.getElementById('editCatYear').value;
+  if (!oldName) { toast('Select a category','err'); return; }
+  if (!newName) { toast('Enter a category name','err'); return; }
+  if (newName !== oldName && state.categories.includes(newName)) { toast('Name already exists','err'); return; }
+  const updates = {};
+  // Update categories array
+  const newCats = state.categories.map(c => c===oldName ? newName : c);
+  updates[`${DB_PATH}/categories`] = newCats;
+  // Update year
+  const newYears = Object.assign({}, state.categoryYears);
+  delete newYears[oldName];
+  newYears[newName] = newYear;
+  updates[`${DB_PATH}/categoryYears`] = newYears;
+  // If name changed, migrate all member status + amounts keys
+  if (newName !== oldName) {
+    Object.keys(state.members).forEach(id => {
+      const m = state.members[id];
+      const oldStatus  = (m.status  && m.status[oldName]  !== undefined) ? m.status[oldName]  : '';
+      const oldAmount  = (m.amounts && m.amounts[oldName] !== undefined) ? m.amounts[oldName] : 0;
+      updates[`${DB_PATH}/members/${id}/status/${newName}`]  = oldStatus;
+      updates[`${DB_PATH}/members/${id}/amounts/${newName}`] = oldAmount;
+      updates[`${DB_PATH}/members/${id}/status/${oldName}`]  = null;
+      updates[`${DB_PATH}/members/${id}/amounts/${oldName}`] = null;
+    });
+  }
+  await db.ref().update(updates);
+  await logChange(`Category: "${oldName}" → "${newName}" (${newYear})`);
+  closeModal();
+  toast(`Category updated ✓`,'ok');
+}
+
+function openEditMember() {
+  const opts = sortedMembers().map(m =>
+    `<option value="${m.id}">${m.last}, ${m.given}</option>`).join('');
+  openModal(`<h3>✏️ Edit Member Name</h3>
+    <div class="form-field">
+      <label>Select Member</label>
+      <select id="editMemSel" onchange="prefillEditFields()" style="width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:14px;outline:none;background:var(--card);">
+        <option value="">— Choose member —</option>${opts}
+      </select>
+    </div>
+    <div class="f2col">
+      <div class="form-field">
+        <label>Last Name</label>
+        <input type="text" id="editLast" placeholder="Last name">
+      </div>
+      <div class="form-field">
+        <label>Given Name</label>
+        <input type="text" id="editGiven" placeholder="Given name">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-full" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-emerald btn-full" onclick="doEditMember()">Save Changes</button>
+    </div>`);
+}
+function prefillEditFields() {
+  const id = document.getElementById('editMemSel').value;
+  if (!id) return;
+  const m = state.members[id];
+  document.getElementById('editLast').value  = m.last;
+  document.getElementById('editGiven').value = m.given;
+  document.getElementById('editLast').focus();
+}
+async function doEditMember() {
+  const id    = document.getElementById('editMemSel').value;
+  const last  = document.getElementById('editLast').value.trim();
+  const given = document.getElementById('editGiven').value.trim();
+  if (!id)                  { toast('Select a member','err'); return; }
+  if (!last || !given)      { toast('Both name fields required','err'); return; }
+  const old = state.members[id];
+  if (last === old.last && given === old.given) { toast('No changes made','err'); return; }
+  await db.ref(`${DB_PATH}/members/${id}/last`).set(last);
+  await db.ref(`${DB_PATH}/members/${id}/given`).set(given);
+  await logChange(`Renamed: ${old.last}, ${old.given} → ${last}, ${given}`);
+  closeModal();
+  toast(`Updated: ${last}, ${given}`, 'ok');
+}
+
+function openRemoveMember() {
+  const opts = sortedMembers().map(m=>
+    `<option value="${m.id}">${m.last}, ${m.given}</option>`).join('');
+  openModal(`<h3>🗑️ Remove Member</h3>
+    <div class="form-field"><label>Select Member</label>
+      <select id="rmMem"><option value="">— Choose —</option>${opts}</select></div>
+    <p style="color:#c0392b;font-size:12px;margin:-4px 0 12px">⚠️ This permanently removes the member and all their payment history.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-full" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger btn-full" onclick="doRemoveMember()">Remove</button>
+    </div>`);
+}
+async function doRemoveMember() {
+  const id = document.getElementById('rmMem').value;
+  if (!id) { toast('Select a member','err'); return; }
+  const m = state.members[id];
+  await db.ref(`${DB_PATH}/members/${id}`).remove();
+  await logChange(`Removed member: ${m.last}, ${m.given}`);
+  closeModal(); toast(`${m.last} removed`,'ok');
+}
+
+// ════════════════════════════════════════════════════════
+//  REMOVE CATEGORY
+// ════════════════════════════════════════════════════════
+function openRemoveCategory() {
+  const opts = state.categories.map(c=>
+    `<option value="${c}">${c}</option>`).join('');
+  openModal(`<h3>🗑️ Remove Category</h3>
+    <div class="form-field"><label>Select Category</label>
+      <select id="rmCat"><option value="">— Choose —</option>${opts}</select></div>
+    <p style="color:#c0392b;font-size:12px;margin:-4px 0 12px">⚠️ All member statuses for this category will be permanently deleted.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-full" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger btn-full" onclick="doRemoveCategory()">Remove</button>
+    </div>`);
+}
+async function doRemoveCategory() {
+  const cat = document.getElementById('rmCat').value;
+  if (!cat) { toast('Select a category','err'); return; }
+  const newCats = state.categories.filter(c=>c!==cat);
+  const updates = {};
+  updates[`${DB_PATH}/categories`] = newCats;
+  Object.keys(state.members).forEach(id => {
+    updates[`${DB_PATH}/members/${id}/status/${cat}`] = null;
+  });
+  await db.ref().update(updates);
+  await logChange(`Removed category: ${cat}`);
+  closeModal(); toast(`Category "${cat}" removed`,'ok');
+}
+
+// ════════════════════════════════════════════════════════
+//  MODAL
+// ════════════════════════════════════════════════════════
+function openModal(html) {
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('modalOverlay').style.display = 'flex';
+  setTimeout(()=>{
+    const inp = document.querySelector('#modalBox input');
+    if(inp) inp.focus();
+  }, 150);
+}
+function closeModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+}
+
+// ════════════════════════════════════════════════════════
+//  TAB SWITCH
+// ════════════════════════════════════════════════════════
+function switchTab(el, view) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  if (view==='admin' && isAdmin) refreshAdminStats();
+}
+
+// ════════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════════
+let _tTimer = null;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type?' '+type:'');
+  clearTimeout(_tTimer);
+  _tTimer = setTimeout(()=>el.className='toast', 3200);
+}
+
+// ════════════════════════════════════════════════════════
+//  ENTER KEY in modals
+// ════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') closeModal();
+});
+
+// ════════════════════════════════════════════════════════
+//  DOWNLOADS
+// ════════════════════════════════════════════════════════
+let dlFmt = 'txt';
+function setFmt(fmt, el) {
+  dlFmt = fmt;
+  document.querySelectorAll('.dl-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function buildDlCatList() {
+  document.getElementById('dlCatList').innerHTML = state.categories.map(cat => `
+    <div class="dl-card" onclick="downloadCategory('${cat}')">
+      <div class="dl-card-icon">📂</div>
+      <div class="dl-card-info">
+        <div class="dl-card-title">${cat}</div>
+        <div class="dl-card-sub">${sortedMembers().length} members \u00b7 ${sortedMembers().filter(m=>(m.status[cat]||'')==='Paid').length} paid</div>
+      </div>
+      <div class="dl-card-arrow">\u2192</div>
+    </div>`).join('');
+}
+
+function triggerDownload(filename, content, mime) {
+  const blob = new Blob([content], {type: mime});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function csvRow(arr) {
+  return arr.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',');
+}
+function nl() { return '\r\n'; }
+
+function downloadAllNames() {
+  const members = sortedMembers();
+  const date    = new Date().toISOString().slice(0,10);
+  if (dlFmt === 'txt') {
+    const lines = [
+      'WONYA ETOME — ALL MEMBERS',
+      'Generated: ' + date,
+      '========================================',
+      ''
+    ].concat(members.map((m,i) => String(i+1).padStart(3,'0') + '. ' + m.last + ', ' + m.given));
+    triggerDownload('Wonya_Etome_Members_' + date + '.txt', lines.join('\r\n'), 'text/plain');
+  } else if (dlFmt === 'csv') {
+    const rows = [csvRow(['#','Last Name','Given Name'])]
+      .concat(members.map((m,i) => csvRow([i+1, m.last, m.given])));
+    triggerDownload('Wonya_Etome_Members_' + date + '.csv', rows.join('\r\n'), 'text/csv');
+  } else {
+    const wb  = XLSX.utils.book_new();
+    const data = [['#','Last Name','Given Name']].concat(members.map((m,i) => [i+1, m.last, m.given]));
+    const ws  = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:5},{wch:18},{wch:22}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Members');
+    XLSX.writeFile(wb, 'Wonya_Etome_Members_' + date + '.xlsx');
+  }
+  toast('Downloaded: All Members (' + dlFmt.toUpperCase() + ')','ok');
+}
+
+function downloadCategory(cat) {
+  const members = sortedMembers();
+  const date    = new Date().toISOString().slice(0,10);
+  const safeCat = cat.replace(/[^a-z0-9]/gi,'_');
+  if (dlFmt === 'txt') {
+    const paid    = members.filter(m => (m.status[cat]||'') === 'Paid');
+    const unpaid  = members.filter(m => (m.status[cat]||'') === 'Unpaid');
+    const pending = members.filter(m => !(m.status[cat]||''));
+    const totalAmt = paid.reduce((s,m) => s + (parseInt(m.amounts[cat])||0), 0);
+    const lines = [
+      'WONYA ETOME — ' + cat.toUpperCase(),
+      'Generated: ' + date,
+      '========================================',
+      'Total Members: ' + members.length + '   Paid: ' + paid.length + '   Unpaid: ' + unpaid.length + '   Pending: ' + pending.length,
+      'Total Collected: ' + totalAmt.toLocaleString('en-US') + ' CFA',
+      '',
+      '--- PAID ---'
+    ]
+    .concat(paid.map((m,i) => String(i+1).padStart(3,'0') + '. ' + m.last + ', ' + m.given + '   ' + (parseInt(m.amounts[cat])||0).toLocaleString('en-US') + ' CFA'))
+    .concat(['', '--- UNPAID ---'])
+    .concat(unpaid.map((m,i) => String(i+1).padStart(3,'0') + '. ' + m.last + ', ' + m.given))
+    .concat(['', '--- PENDING ---'])
+    .concat(pending.map((m,i) => String(i+1).padStart(3,'0') + '. ' + m.last + ', ' + m.given));
+    triggerDownload('Wonya_Etome_' + safeCat + '_' + date + '.txt', lines.join('\r\n'), 'text/plain');
+  } else if (dlFmt === 'csv') {
+    const rows = [csvRow(['Last Name','Given Name','Amount (CFA)','Status'])]
+      .concat(members.map(m => csvRow([m.last, m.given, parseInt(m.amounts[cat])||0, m.status[cat]||'Pending'])));
+    triggerDownload('Wonya_Etome_' + safeCat + '_' + date + '.csv', rows.join('\r\n'), 'text/csv');
+  } else {
+    const wb  = XLSX.utils.book_new();
+    const data = [['Last Name','Given Name','Amount (CFA)','Status']]
+      .concat(members.map(m => [m.last, m.given, parseInt(m.amounts[cat])||0, m.status[cat]||'Pending']));
+    const ws  = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:18},{wch:22},{wch:14},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, ws, cat.slice(0,31));
+    XLSX.writeFile(wb, 'Wonya_Etome_' + safeCat + '_' + date + '.xlsx');
+  }
+  toast('Downloaded: ' + cat + ' (' + dlFmt.toUpperCase() + ')', 'ok');
+}
+
+function downloadFullRegistry() {
+  const members = sortedMembers();
+  const cats    = state.categories;
+  const date    = new Date().toISOString().slice(0,10);
+  if (dlFmt === 'txt') {
+    const lines = ['WONYA ETOME — FULL REGISTRY', 'Generated: ' + date, '============================================================', ''];
+    members.forEach((m,i) => {
+      lines.push(String(i+1).padStart(3,'0') + '. ' + m.last + ', ' + m.given);
+      cats.forEach(cat => {
+        const s = m.status[cat] || 'Pending';
+        const a = parseInt(m.amounts[cat]) || 0;
+        lines.push('     ' + cat + ': ' + s + (a ? ' · ' + a.toLocaleString('en-US') + ' CFA' : ''));
+      });
+      lines.push('');
+    });
+    triggerDownload('Wonya_Etome_Full_Registry_' + date + '.txt', lines.join('\r\n'), 'text/plain');
+  } else if (dlFmt === 'csv') {
+    const header = ['Last Name','Given Name'].concat(cats.reduce((a,c) => a.concat([c+' Status', c+' Amount (CFA)']), []));
+    const rows = [csvRow(header)].concat(members.map(m => {
+      const row = [m.last, m.given];
+      cats.forEach(c => { row.push(m.status[c]||'Pending'); row.push(parseInt(m.amounts[c])||0); });
+      return csvRow(row);
+    }));
+    triggerDownload('Wonya_Etome_Full_Registry_' + date + '.csv', rows.join('\r\n'), 'text/csv');
+  } else {
+    const wb   = XLSX.utils.book_new();
+    const header = ['Last Name','Given Name'].concat(cats.reduce((a,c) => a.concat([c+' Status', c+' Amt (CFA)']), []));
+    const data = [header].concat(members.map(m => {
+      const row = [m.last, m.given];
+      cats.forEach(c => { row.push(m.status[c]||'Pending'); row.push(parseInt(m.amounts[c])||0); });
+      return row;
+    }));
+    const ws   = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:18},{wch:22}].concat(cats.reduce((a) => a.concat([{wch:14},{wch:14}]), []));
+    XLSX.utils.book_append_sheet(wb, ws, 'Full Registry');
+    XLSX.writeFile(wb, 'Wonya_Etome_Full_Registry_' + date + '.xlsx');
+  }
+  toast('Downloaded: Full Registry (' + dlFmt.toUpperCase() + ')', 'ok');
+}
+// ════════════════════════════════════════════════════════
+//  START
+// ════════════════════════════════════════════════════════
+boot();
+</script>
+</body>
+</html>
